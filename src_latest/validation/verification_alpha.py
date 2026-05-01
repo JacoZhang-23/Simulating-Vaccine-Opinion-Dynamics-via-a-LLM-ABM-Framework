@@ -160,9 +160,9 @@ async def run_single_alpha_experiment(alpha_setting, population_df, network_df,
     Run one experiment for a given alpha setting.
 
     Args:
-        alpha_setting: float 或 "uniform"
-        population_df, network_df, ground_truth_df: 预处理好的数据
-        output_base: 输出根目录
+        alpha_setting: float or "uniform"
+        population_df, network_df, ground_truth_df: preprocessed data frames
+        output_base: output root directory
     """
     label = f"alpha_{alpha_setting}" if isinstance(alpha_setting, (int, float)) else "alpha_uniform"
     experiment_name = f"verification_{label}"
@@ -266,11 +266,11 @@ async def run_single_alpha_experiment(alpha_setting, population_df, network_df,
 
 def plot_alpha_comparison(all_results, output_base):
     """
-    绘制两张对比图（各含 6 条线）：
-      图 1: 疫苗接种率轨迹
-      图 2: 平均 belief 演化
+    Plot two comparison figures, each with six lines:
+      Figure 1: vaccination rate trajectory
+      Figure 2: average belief evolution
     """
-    # 配色：从冷到暖，基线黑色虚线
+    # Color palette from cool to warm, with a black dashed baseline.
     colors = {
         'alpha_0.0': '#2166ac',
         'alpha_0.5': '#fdae61',
@@ -278,7 +278,7 @@ def plot_alpha_comparison(all_results, output_base):
         'alpha_uniform': '#333333',
     }
 
-    # ---- 图 1: 接种率轨迹 ----
+    # ---- Figure 1: Vaccination rate trajectory ----
     fig1, ax1 = plt.subplots(figsize=(10, 6), dpi=150)
     for r in all_results:
         label = r['alpha_setting']
@@ -301,7 +301,7 @@ def plot_alpha_comparison(all_results, output_base):
     plt.close(fig1)
     logger.info(f"Plot saved: {path1}")
 
-    # ---- 图 2: 平均 belief 演化 ----
+    # ---- Figure 2: Average belief evolution ----
     fig2, ax2 = plt.subplots(figsize=(10, 6), dpi=150)
     for r in all_results:
         label = r['alpha_setting']
@@ -327,7 +327,7 @@ def plot_alpha_comparison(all_results, output_base):
 
 
 async def main():
-    """运行完整的 alpha 参数 verification。"""
+    """Run the full alpha-parameter verification workflow."""
     logger.info("\n" + "=" * 80)
     logger.info("  VERIFICATION: Alpha (Openness) Parameter")
     logger.info(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -338,16 +338,16 @@ async def main():
     logger.info(f"Alpha settings: {alpha_settings}")
     logger.info(f"Data source: full_county_networks, seed={SEED_PROPORTION*100:.3f}% + 1-hop expansion\n")
 
-    # --- 加载 & 抽样（一次性） ---
+    # --- Load and sample once ---
     population_df, network_df, ground_truth_df = prepare_data()
 
-    # --- 输出目录 ---
+    # --- Output directory ---
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
     output_base = os.path.join(project_root, "data", "output", "verification_alpha")
     os.makedirs(output_base, exist_ok=True)
 
-    # --- 依次运行 ---
+    # --- Run sequentially ---
     all_results = []
     for i, alpha in enumerate(alpha_settings, 1):
         logger.info(f"\n--- Experiment {i}/{len(alpha_settings)}: alpha = {alpha} ---")
@@ -358,7 +358,7 @@ async def main():
         except Exception as e:
             logger.error(f"  [FAIL] alpha={alpha}: {e}")
 
-    # --- 汇总 ---
+    # --- Summary ---
     if all_results:
         plot_alpha_comparison(all_results, output_base)
 

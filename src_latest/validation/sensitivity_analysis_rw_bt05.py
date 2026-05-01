@@ -39,7 +39,7 @@ from config import get_model_params, SIMULATION_PARAMS
 
 
 async def run_single_experiment(resonance_weight):
-    """运行单个 resonance_weight 值的实验（bt=0.5 固定）"""
+    """Run one experiment for a single resonance_weight value with bt fixed at 0.5."""
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)  # LLMIP_new/
@@ -54,7 +54,7 @@ async def run_single_experiment(resonance_weight):
     logger.info(f"📁 Output: {output_base_path}")
     logger.info("=" * 80 + "\n")
 
-    # 配置日志
+    # Configure logging.
     logger.remove()
     logger.add(sys.stderr, level="DEBUG", colorize=True)
     log_path = os.path.join(output_base_path, "logs")
@@ -62,7 +62,7 @@ async def run_single_experiment(resonance_weight):
     log_file = os.path.join(log_path, f"simulation_{experiment_name}.log")
     logger.add(log_file, level="INFO", rotation="10 MB", colorize=False)
 
-    # --- 1. 定义路径和参数 ---
+    # --- 1. Paths and parameters ---
     logger.info("--- Step 1: Loading Data ---")
     load_dotenv()
 
@@ -72,25 +72,25 @@ async def run_single_experiment(resonance_weight):
     NET_PATH = os.path.join(NETWORK_DATA_DIR, 'network_complete.csv')
     GROUND_TRUTH_PATH = os.path.join(input_base_path, '00_NYS_County_vax_rate_by_age.csv')
 
-    # 从配置文件获取模型参数
+    # Load model parameters from config.
     MODEL_PARAMS = get_model_params()
 
     MODEL_PARAMS.update({
-        'belief_threshold': 0.5,           # 固定为 0.5（限制性交互）
-        'resonance_weight': resonance_weight,  # 🔬 敏感性分析：改变此参数
+        'belief_threshold': 0.5,
+        'resonance_weight': resonance_weight,
         'use_batch_dialogue': True,
     })
 
     SIMULATION_STEPS = SIMULATION_PARAMS['default_steps']
 
-    # --- 1.5 清理旧的 agent_trajectories.csv ---
+    # --- 1.5 Remove stale agent_trajectories.csv ---
     default_trajectory_path = os.path.join(project_root, "data", "output", "dataframes",
                                            "agent_trajectories.csv")
     if os.path.exists(default_trajectory_path):
         os.remove(default_trajectory_path)
         logger.info("🧹 Removed stale agent_trajectories.csv")
 
-    # --- 2. 加载预生成的子样本网络数据（10% subsample） ---
+    # --- 2. Load the prebuilt subsample network ---
     logger.info(f"Loading subsample network data from: {NETWORK_DATA_DIR}")
 
     if not os.path.exists(POP_PATH):
@@ -114,7 +114,7 @@ async def run_single_experiment(resonance_weight):
 
     initial_sample_ids = set(population_df['reindex'].values)
 
-    # 确保所有必需的字段都存在
+    # Check required fields.
     required_fields = ['id', 'age', 'gender', 'hhold', 'htype', 'wp', 'urban', 'reindex',
                        'GEOID_cty', 'if_employed', 'household_id', 'personal_income',
                        'education', 'occupation', 'health_insurance', 'FINCP', 'HHT',
@@ -138,7 +138,7 @@ async def run_single_experiment(resonance_weight):
     logger.info("Loading ground truth vaccination data...")
     ground_truth_df = load_ground_truth_data(GROUND_TRUTH_PATH)
 
-    # --- 3. 初始化并运行模型 ---
+    # --- 3. Initialize and run the model ---
     logger.info("\n" + "=" * 80)
     logger.info(f"🚀 Initializing VaxModel (resonance_weight={resonance_weight}, belief_threshold=0.5)...")
     logger.info("=" * 80)
@@ -146,9 +146,9 @@ async def run_single_experiment(resonance_weight):
     logger.info(f"   - Population: {len(population_df):,} agents")
     logger.info(f"   - Network edges: {len(network_df):,}")
     logger.info(f"   - Simulation steps: {SIMULATION_STEPS}")
-    logger.info(f"   - 🎯 resonance_weight: {resonance_weight} (敏感性分析参数)")
-    logger.info(f"   - belief_threshold: 0.5 (固定)")
-    logger.info(f"   - 📊 权重解释: 背景相似度 {resonance_weight * 100:.0f}%, 对话内容 {(1 - resonance_weight) * 100:.0f}%")
+    logger.info(f"   - 🎯 resonance_weight: {resonance_weight} (sensitivity-analysis parameter)")
+    logger.info(f"   - belief_threshold: 0.5 (fixed)")
+    logger.info(f"   - 📊 Weight split: background similarity {resonance_weight * 100:.0f}%, dialogue content {(1 - resonance_weight) * 100:.0f}%")
     concurrent_batches = MODEL_PARAMS.get('concurrent_batches', 100)
     batch_size = MODEL_PARAMS.get('batch_size', 25)
     logger.info(f"   - API concurrency: {concurrent_batches} batches × {batch_size} agents = {concurrent_batches * batch_size} agents/round")
@@ -165,13 +165,13 @@ async def run_single_experiment(resonance_weight):
     logger.info(f"✅ Simulation completed in {sim_duration:.1f}s ({sim_duration / 60:.1f} minutes)")
     logger.info("=" * 80)
 
-    # --- 4. 保存和分析结果 ---
+    # --- 4. Save and analyze results ---
     logger.info("Simulation finished. Saving results...")
 
     output_df_path = os.path.join(output_base_path, "dataframes")
     os.makedirs(output_df_path, exist_ok=True)
 
-    # 迁移 agent_trajectories.csv
+    # Move agent_trajectories.csv.
     default_trajectory_path = os.path.join(project_root, "data", "output", "dataframes",
                                            "agent_trajectories.csv")
     experiment_trajectory_path = os.path.join(output_df_path, "agent_trajectories.csv")
@@ -182,7 +182,7 @@ async def run_single_experiment(resonance_weight):
     else:
         logger.warning("⚠️  agent_trajectories.csv not found at default location")
 
-    # 保存最终 Agent 状态
+    # Save the final agent state.
     final_agent_data_list = []
     agents_with_dialogue = 0
     total_agents = len(model.schedule.agents)
@@ -222,20 +222,20 @@ async def run_single_experiment(resonance_weight):
     final_agent_df.to_csv(os.path.join(output_df_path, "final_agent_state.csv"), index=False)
     logger.info("Final agent data saved.")
 
-    # 保存每步数据
+    # Save per-step data.
     model.datacollector.to_csv(os.path.join(output_df_path, "step_by_step_data.csv"), index=False)
     logger.info("Step-by-step data saved.")
 
-    # 保存对话统计
+    # Save dialogue statistics.
     dialogue_stats = model.get_dialogue_statistics()
     if dialogue_stats['total_dialogues'] > 0:
         dialogue_stats['dialogue_df'].to_csv(os.path.join(output_df_path, "dialogue_history.csv"), index=False)
         logger.info("Dialogue history saved.")
 
-    # 绘制图表并获取评估指标
+    # Plot figures and collect evaluation metrics.
     metrics = plot_vaccination_rate(model.datacollector, ground_truth_df, output_base_path)
 
-    # 输出统计信息
+    # Print summary statistics.
     logger.info("\n=== Discussion Participation ===")
     participation_rate = agents_with_dialogue / total_agents * 100
     logger.info(f"Agents who participated: {agents_with_dialogue} ({participation_rate:.2f}%)")
@@ -264,7 +264,7 @@ async def run_single_experiment(resonance_weight):
 
 
 async def main():
-    """运行 rw 敏感性分析（bt=0.5 条件下）"""
+    """Run the rw sensitivity analysis with bt fixed at 0.5."""
     logger.info("\n" + "=" * 80)
     logger.info("🔬 SENSITIVITY ANALYSIS: resonance_weight (belief_threshold=0.5)")
     logger.info(f"📅 Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -296,7 +296,7 @@ async def main():
             logger.exception(e)
             continue
 
-    # 生成汇总报告
+    # Generate the summary report.
     if all_results:
         logger.info("\n" + "=" * 80)
         logger.info("📊 SENSITIVITY ANALYSIS SUMMARY")

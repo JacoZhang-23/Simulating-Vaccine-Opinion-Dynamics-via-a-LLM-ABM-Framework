@@ -33,7 +33,7 @@ from model import VaxModel
 from config import get_model_params, SIMULATION_PARAMS
 
 def sample_with_complete_network(population_df, network_df, initial_sample_proportion=0.005):
-    """从人口中抽样指定比例的个体，并包含这些个体的所有网络连接对象"""
+    """Sample a fraction of the population and keep all connected neighbors."""
     logger.info(f"Starting network-complete sampling process...")
     logger.info(f"Initial population size: {len(population_df)}")
     logger.info(f"Initial network connections: {len(network_df)}")
@@ -57,7 +57,7 @@ def sample_with_complete_network(population_df, network_df, initial_sample_propo
     
     logger.info(f"Total nodes after including connections: {len(connected_nodes)}")
     
-    # 获取扩展后的人口样本（只保留在网络中的节点）
+    # Build the expanded population sample, keeping only nodes that are in the network.
     sampled_population_df = population_df[population_df['reindex'].isin(connected_nodes)].copy()
     
     sampled_network_df = network_df[
@@ -88,7 +88,7 @@ def sample_with_complete_network(population_df, network_df, initial_sample_propo
 
 
 async def run_single_experiment(belief_threshold):
-    """运行单个belief_threshold值的实验"""
+    """Run one experiment for a single belief_threshold value."""
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)  # LLMIP_new/
@@ -103,13 +103,13 @@ async def run_single_experiment(belief_threshold):
     logger.info(f"📁 Output: {output_base_path}")
     logger.info("="*80 + "\n")
     
-    # 配置日志（移除上一个实验的 sink，避免堆叠写入多个文件）
+    # Configure logging and remove the previous sink to avoid stacking writes to multiple files.
     logger.remove()
-    logger.add(sys.stderr, level="DEBUG", colorize=True)  # 终端：DEBUG 级别，显示所有中间过程
+    logger.add(sys.stderr, level="DEBUG", colorize=True)  # Terminal: DEBUG level, show all intermediate steps.
     log_path = os.path.join(output_base_path, "logs")
     os.makedirs(log_path, exist_ok=True)
     log_file = os.path.join(log_path, f"simulation_{experiment_name}.log")
-    logger.add(log_file, level="INFO", rotation="10 MB", colorize=False)  # 文件：INFO 级别，只记录重要信息
+    logger.add(log_file, level="INFO", rotation="10 MB", colorize=False)  # File: INFO level, record only important information.
     
     # --- 1. 定义路径和参数 ---
     logger.info("--- Step 1: Loading Data ---")

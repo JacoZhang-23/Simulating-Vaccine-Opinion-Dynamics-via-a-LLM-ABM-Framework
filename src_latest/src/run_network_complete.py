@@ -49,23 +49,22 @@ def _mask_sensitive_params(params):
     return masked
 
 def sample_with_complete_network(population_df, network_df, initial_sample_proportion=0.005):
-    """
-    从人口中抽样指定比例的个体，并包含这些个体的所有网络连接对象
-    
+    """Sample a fraction of the population and keep all connected neighbors.
+
     Args:
-        population_df: 包含所有人口的DataFrame
-        network_df: 包含网络连接的DataFrame
-        initial_sample_proportion: 初始抽样比例
-    
+        population_df: full population DataFrame
+        network_df: network edge DataFrame
+        initial_sample_proportion: initial sampling ratio
+
     Returns:
-        sampled_population_df: 包含初始样本及其网络连接对象的人口DataFrame
-        sampled_network_df: 对应的网络DataFrame
+        sampled_population_df: population DataFrame for the sample plus its neighbors
+        sampled_network_df: matching network DataFrame
     """
     logger.info(f"Starting network-complete sampling process...")
     logger.info(f"Initial population size: {len(population_df)}")
     logger.info(f"Initial network connections: {len(network_df)}")
     
-    # 计算初始样本量
+    # Compute the initial sample size.
     initial_sample_size = int(len(population_df) * initial_sample_proportion)
     logger.info(f"Initial sample size target: {initial_sample_size} ({initial_sample_proportion*100}%)")
     

@@ -52,7 +52,7 @@ def batch_text2embedding(texts, batch_size=32):
             return_tensors="pt", 
             truncation=True, 
             max_length=128,
-            padding=True  # 批量处理需要padding
+            padding=True  # Batch processing needs padding.
         )
         
         # Move inputs to GPU.
@@ -110,16 +110,16 @@ def parse_id_for_geoid_and_employment(id_str):
     
     return geoid_cty, if_employed
 
-# 注释过时的方法
+# Deprecated helper methods.
 # def create_user_embedding():
 #     """
-#     已过时：此方法用于生成用户嵌入，但已被新的add_profile_embedding_to_population方法取代。
+#     Deprecated: this method generated user embeddings and has been replaced by add_profile_embedding_to_population.
 #     """
 #     pass
 
 # def infer_hht_and_children_from_csv(population_df, network_df):
 #     """
-#     已过时：此方法用于从CSV推断HHT和孩子数量，但已被add_csv_based_features_to_population方法取代。
+#     Deprecated: this method inferred HHT and child counts from CSV, but has been replaced by add_csv_based_features_to_population.
 #     """
 #     pass
 

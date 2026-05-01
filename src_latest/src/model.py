@@ -113,10 +113,10 @@ class ApiKeyProvider:
                 'timeout': 0,
                 'error': 0,
                 'total_time': 0.0,
-                'recent_failures': 0,  # 最近连续失败次数
-                'is_isolated': False,   # 是否被隔离
-                'isolation_until': 0,   # 隔离到什么时候（timestamp）
-                'last_6_suffix': key[-6:] if len(key) >= 6 else key  # 用于日志显示
+                'recent_failures': 0,  # Number of recent consecutive failures.
+                'is_isolated': False,   # Whether the key is isolated.
+                'isolation_until': 0,   # Isolation end time (timestamp).
+                'last_6_suffix': key[-6:] if len(key) >= 6 else key  # Used for log display.
             } for key in self.api_keys
         }
 
@@ -136,7 +136,7 @@ class ApiKeyProvider:
                     # Isolation expired.
                     stats['is_isolated'] = False
                     stats['recent_failures'] = 0
-                    logger.info(f"🔓 Key ...{stats['last_6_suffix']} 隔离期满，恢复使用")
+                    logger.info(f"🔓 Key ...{stats['last_6_suffix']} isolation period ended; key restored")
                     return key
                 else:
                     # Still isolated; put it back and try another key.
@@ -145,7 +145,7 @@ class ApiKeyProvider:
                     active_keys = sum(1 for s in self.key_stats.values() if not s['is_isolated'])
                     if active_keys == 0:
                         wait_time = min(stats['isolation_until'] - time.time(), 10)
-                        logger.warning(f"⚠️  所有key都被隔离，等待 {wait_time:.1f} 秒...")
+                        logger.warning(f"⚠️  All keys are isolated; waiting {wait_time:.1f} seconds...")
                         await asyncio.sleep(max(1, wait_time))
                     continue
             
